@@ -1,3 +1,6 @@
+// src/app/post/[slug]/page.tsx
+export const revalidate = 60; // Revalidate post pages every 60 seconds
+
 type Props = {
   params: {
     slug: string;
@@ -31,9 +34,9 @@ export default async function PostPage({ params }: Props) {
   );
 }
 
-// Used by Next.js to pre-render pages for all posts during build
+// Pre-render post pages at build time
 export async function generateStaticParams() {
-  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
+  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts?per_page=100");
   const posts = await res.json();
 
   return posts.map((post: any) => ({
