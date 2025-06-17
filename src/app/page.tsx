@@ -17,3 +17,15 @@ export default function PostPage({ params }: Props) {
     </main>
   );
 }
+
+
+export async function generateStaticParams() {
+  // Fetch your posts slugs from your backend (replace with your real API)
+  const res = await fetch("https://yourwordpresssite.com/wp-json/wp/v2/posts");
+  const posts = await res.json();
+
+  return posts.map((post: any) => ({
+    slug: post.slug,
+  }));
+}
+
