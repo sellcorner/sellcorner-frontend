@@ -1,11 +1,6 @@
-// src/app/post/[slug]/page.tsx
-export const revalidate = 60; // Revalidate post pages every 60 seconds
+export const revalidate = 60;
 
-type Props = {
-  params: {
-    slug: string;
-  };
-};
+import { notFound } from 'next/navigation';
 
 type Post = {
   title: { rendered: string };
@@ -18,12 +13,15 @@ async function getPostData(slug: string): Promise<Post | null> {
   return posts.length > 0 ? posts[0] : null;
 }
 
-export default async function PostPage({ params }: Props) {
-  const { slug } = params;
-  const post = await getPostData(slug);
+type PageProps = {
+  params: { slug: string };
+};
+
+export default async function PostPage({ params }: PageProps) {
+  const post = await getPostData(params.slug);
 
   if (!post) {
-    return <main><h1>Post not found</h1></main>;
+    notFound(); // Uses Next.js built-in 404
   }
 
   return (
@@ -34,7 +32,6 @@ export default async function PostPage({ params }: Props) {
   );
 }
 
-// Pre-render post pages at build time
 export async function generateStaticParams() {
   const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts?per_page=100");
   const posts = await res.json();
