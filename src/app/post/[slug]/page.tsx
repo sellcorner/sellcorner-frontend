@@ -1,11 +1,15 @@
-export const revalidate = 60;
-
-import { notFound } from 'next/navigation';
+import { type Metadata } from 'next';
 
 type Post = {
   title: { rendered: string };
   content: { rendered: string };
 };
+
+type PageProps = {
+  params: { slug: string };
+};
+
+export const revalidate = 60;
 
 async function getPostData(slug: string): Promise<Post | null> {
   const res = await fetch(`https://sellcorner.net/wp-json/wp/v2/posts?slug=${slug}`);
@@ -13,15 +17,12 @@ async function getPostData(slug: string): Promise<Post | null> {
   return posts.length > 0 ? posts[0] : null;
 }
 
-type PageProps = {
-  params: { slug: string };
-};
-
 export default async function PostPage({ params }: PageProps) {
-  const post = await getPostData(params.slug);
+  const { slug } = params;
+  const post = await getPostData(slug);
 
   if (!post) {
-    notFound(); // Uses Next.js built-in 404
+    return <main><h1>Post not found</h1></main>;
   }
 
   return (
@@ -32,6 +33,7 @@ export default async function PostPage({ params }: PageProps) {
   );
 }
 
+// For static generation of dynamic routes
 export async function generateStaticParams() {
   const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts?per_page=100");
   const posts = await res.json();
