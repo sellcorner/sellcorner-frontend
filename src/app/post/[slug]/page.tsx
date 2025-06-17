@@ -1,32 +1,42 @@
-import { notFound } from 'next/navigation'
+type Props = {
+  params: {
+    slug: string;
+  };
+};
 
-export default async function PostPage({ params }: { params: { slug: string } }) {
-  const res = await fetch(process.env.NEXT_PUBLIC_WORDPRESS_GRAPHQL_ENDPOINT!, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `
-        query GetPost($slug: ID!) {
-          post(id: $slug, idType: SLUG) {
-            title
-            content
-            date
-          }
-        }
-      `,
-      variables: { slug: params.slug },
-    }),
-  })
+type Post = {
+  title: { rendered: string };
+  content: { rendered: string };
+};
 
-  const { data } = await res.json()
+async function getPostData(slug: string): Promise<Post | null> {
+  const res = await fetch(`https://sellcorner.net/wp-json/wp/v2/posts?slug=${slug}`);
+  const posts = await res.json();
+  return posts.length > 0 ? posts[0] : null;
+}
 
-  if (!data?.post) return notFound()
+export default async function PostPage({ params }: Props) {
+  const { slug } = params;
+  const post = await getPostData(slug);
+
+  if (!post) {
+    return <main><h1>Post not found</h1></main>;
+  }
 
   return (
-    <main className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-3xl font-bold" dangerouslySetInnerHTML={{ __html: data.post.title }} />
-      <div className="text-sm text-gray-500 mb-4">{new Date(data.post.date).toLocaleDateString()}</div>
-      <article dangerouslySetInnerHTML={{ __html: data.post.content }} />
+    <main>
+      <h1 dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+      <article dangerouslySetInnerHTML={{ __html: post.content.rendered }} />
     </main>
-  )
+  );
+}
+
+// Used by Next.js to pre-render pages for all posts during build
+export async function generateStaticParams() {
+  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
+  const posts = await res.json();
+
+  return posts.map((post: any) => ({
+    slug: post.slug,
+  }));
 }
