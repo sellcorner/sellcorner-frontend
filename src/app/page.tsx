@@ -1,3 +1,8 @@
+// src/app/page.tsx
+import Link from 'next/link';
+
+export const revalidate = 60; // Revalidate static content every 60 seconds
+
 type Post = {
   id: number;
   slug: string;
@@ -5,7 +10,7 @@ type Post = {
 };
 
 async function getPosts(): Promise<Post[]> {
-  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
+  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts?per_page=10");
   const posts = await res.json();
   return posts;
 }
@@ -19,7 +24,9 @@ export default async function HomePage() {
       <ul>
         {posts.map((post) => (
           <li key={post.id}>
-            <a href={`/post/${post.slug}`} dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+            <Link href={`/post/${post.slug}`}>
+              <span dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+            </Link>
           </li>
         ))}
       </ul>
