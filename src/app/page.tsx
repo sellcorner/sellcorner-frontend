@@ -1,42 +1,28 @@
-type Props = {
-  params: {
-    slug: string;
-  };
-};
-
 type Post = {
+  id: number;
+  slug: string;
   title: { rendered: string };
-  content: { rendered: string };
 };
 
-async function getPostData(slug: string): Promise<Post | null> {
-  const res = await fetch(`https://sellcorner.net/wp-json/wp/v2/posts?slug=${slug}`);
+async function getPosts(): Promise<Post[]> {
+  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
   const posts = await res.json();
-  return posts.length > 0 ? posts[0] : null;
+  return posts;
 }
 
-export default async function PostPage({ params }: Props) {
-  const { slug } = params;
-  const post = await getPostData(slug);
-
-  if (!post) {
-    return <main><h1>Post not found</h1></main>;
-  }
+export default async function HomePage() {
+  const posts = await getPosts();
 
   return (
     <main>
-      <h1 dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
-      <article dangerouslySetInnerHTML={{ __html: post.content.rendered }} />
+      <h1>Recent Posts</h1>
+      <ul>
+        {posts.map((post) => (
+          <li key={post.id}>
+            <a href={`/post/${post.slug}`} dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+          </li>
+        ))}
+      </ul>
     </main>
   );
-}
-
-// Used by Next.js to pre-render pages for all posts during build
-export async function generateStaticParams() {
-  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
-  const posts = await res.json();
-
-  return posts.map((post: any) => ({
-    slug: post.slug,
-  }));
 }
