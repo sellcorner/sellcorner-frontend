@@ -1,31 +1,42 @@
-import { ReactNode } from "react";
-
 type Props = {
   params: {
     slug: string;
   };
 };
 
-export default function PostPage({ params }: Props) {
-  const { slug } = params;
+type Post = {
+  title: { rendered: string };
+  content: { rendered: string };
+};
 
-  // Use the slug to fetch data or display content
+async function getPostData(slug: string): Promise<Post | null> {
+  const res = await fetch(`https://sellcorner.net/wp-json/wp/v2/posts?slug=${slug}`);
+  const posts = await res.json();
+  return posts.length > 0 ? posts[0] : null;
+}
+
+export default async function PostPage({ params }: Props) {
+  const { slug } = params;
+  const post = await getPostData(slug);
+
+  if (!post) {
+    return <main><h1>Post not found</h1></main>;
+  }
+
   return (
     <main>
-      <h1>Post: {slug}</h1>
-      {/* You can fetch the post content here or use a component */}
+      <h1 dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+      <article dangerouslySetInnerHTML={{ __html: post.content.rendered }} />
     </main>
   );
 }
 
-
+// Used by Next.js to pre-render pages for all posts during build
 export async function generateStaticParams() {
-  // Fetch your posts slugs from your backend (replace with your real API)
-  const res = await fetch("https://yourwordpresssite.com/wp-json/wp/v2/posts");
+  const res = await fetch("https://sellcorner.net/wp-json/wp/v2/posts");
   const posts = await res.json();
 
   return posts.map((post: any) => ({
     slug: post.slug,
   }));
 }
-
